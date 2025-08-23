@@ -15,11 +15,7 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostLikeId implements Serializable {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long likeId;
+public class LikeId implements Serializable {
+    private Long objectId;
     private Long authorId;
-    public PostLikeId( Long authorId) {
-        this.authorId = likeId;
-    }
 }
