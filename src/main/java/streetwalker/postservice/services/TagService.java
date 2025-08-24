@@ -2,11 +2,9 @@ package streetwalker.postservice.services;
 
 import org.springframework.stereotype.Service;
 import streetwalker.postservice.dto.TagDTO;
-import streetwalker.postservice.models.Post;
 import streetwalker.postservice.models.Tag;
 import streetwalker.postservice.repositories.TagRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
