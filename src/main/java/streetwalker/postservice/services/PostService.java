@@ -1,13 +1,18 @@
 package streetwalker.postservice.services;
 
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import streetwalker.postservice.dto.PostCreateDTO;
 import streetwalker.postservice.dto.PostDTO;
 import streetwalker.postservice.dto.PostLikeDTO;
+import streetwalker.postservice.dto.PostUpdateDTO;
 import streetwalker.postservice.mappers.PostMapper;
 import streetwalker.postservice.models.*;
 import streetwalker.postservice.repositories.PostRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -36,7 +41,22 @@ public class PostService {
             return postMapper.toDTO(post);
         }
         return null;
+    }
+    public PostDTO getPost(Long id) throws RuntimeException {
+        return postMapper.toDTO(postRepository.findById(id).orElseThrow(()-> new RuntimeException("Post not found")));
+    }
+    //связать с юзерсервисом, добавить поиск по сообществам и юзернеймам
+    public Page<PostDTO> getPosts(Pageable pageable, String title) throws RuntimeException {
+        return postRepository.findPostByTitleContainingIgnoreCase(pageable, title).map(postMapper::toDTO);
+    }
 
+    public PostDTO update(PostUpdateDTO postDTO) throws RuntimeException {
+        Post post = postRepository.findById(postDTO.getId()).orElseThrow(()-> new RuntimeException("Post not found"));
+        postMapper.updateFromDTO(postDTO, post);
+        return postMapper.toDTO(postRepository.save(post));
+    }
+    public void delete(Long id) throws DataAccessException {
+        postRepository.deleteById(id);
     }
     public void likePost(PostLikeDTO postLikeDTO) throws RuntimeException {
         Post post = postRepository.findById(postLikeDTO.getPostId())

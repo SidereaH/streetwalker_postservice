@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.*;
 import streetwalker.postservice.dto.*;
 import streetwalker.postservice.mappers.PostMapper;
 import streetwalker.postservice.models.*;
@@ -258,5 +260,328 @@ class PostServiceTest {
         assertEquals("Already unliked or never liked", exception.getMessage());
         verify(postRepository).findById(postId);
         verify(postRepository, never()).save(any());
+    }
+
+    @Test
+    void getPost_WithExistingId_ShouldReturnPostDTO() {
+        // Arrange
+        Long postId = 1L;
+        Post post = new Post();
+        post.setId(postId);
+        PostDTO expectedDTO = new PostDTO();
+        expectedDTO.setId(postId);
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postMapper.toDTO(post)).thenReturn(expectedDTO);
+
+        // Act
+        PostDTO result = postService.getPost(postId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(postId, result.getId());
+        verify(postRepository).findById(postId);
+        verify(postMapper).toDTO(post);
+    }
+
+    @Test
+    void getPost_WithNonExistingId_ShouldThrowException() {
+        // Arrange
+        Long postId = 999L;
+        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            postService.getPost(postId);
+        });
+
+        assertEquals("Post not found", exception.getMessage());
+        verify(postRepository).findById(postId);
+        verify(postMapper, never()).toDTO(any());
+    }
+
+    @Test
+    void getPosts_WithTitle_ShouldReturnPageOfPostDTO() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("id"));
+        String title = "test";
+
+        Post post1 = new Post();
+        post1.setId(1L);
+        Post post2 = new Post();
+        post2.setId(2L);
+
+        List<Post> posts = List.of(post1, post2);
+        Page<Post> postPage = new PageImpl<>(posts, pageable, posts.size());
+
+        PostDTO dto1 = new PostDTO();
+        dto1.setId(1L);
+        PostDTO dto2 = new PostDTO();
+        dto2.setId(2L);
+
+        when(postRepository.findPostByTitleContainingIgnoreCase(pageable, title))
+                .thenReturn(postPage);
+        when(postMapper.toDTO(post1)).thenReturn(dto1);
+        when(postMapper.toDTO(post2)).thenReturn(dto2);
+
+        // Act
+        Page<PostDTO> result = postService.getPosts(pageable, title);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(1L, result.getContent().get(0).getId());
+        assertEquals(2L, result.getContent().get(1).getId());
+        verify(postRepository).findPostByTitleContainingIgnoreCase(pageable, title);
+        verify(postMapper, times(2)).toDTO(any(Post.class));
+    }
+
+    @Test
+    void getPosts_WithEmptyTitle_ShouldReturnAllPosts() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        String title = "";
+
+        Post post = new Post();
+        post.setId(1L);
+        Page<Post> postPage = new PageImpl<>(List.of(post), pageable, 1);
+        PostDTO dto = new PostDTO();
+        dto.setId(1L);
+
+        when(postRepository.findPostByTitleContainingIgnoreCase(pageable, title))
+                .thenReturn(postPage);
+        when(postMapper.toDTO(post)).thenReturn(dto);
+
+        // Act
+        Page<PostDTO> result = postService.getPosts(pageable, title);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        verify(postRepository).findPostByTitleContainingIgnoreCase(pageable, title);
+    }
+
+    @Test
+    void getPosts_WithNullTitle_ShouldReturnAllPosts() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        String title = null;
+
+        Post post = new Post();
+        post.setId(1L);
+        Page<Post> postPage = new PageImpl<>(List.of(post), pageable, 1);
+        PostDTO dto = new PostDTO();
+        dto.setId(1L);
+
+        when(postRepository.findPostByTitleContainingIgnoreCase(pageable, title))
+                .thenReturn(postPage);
+        when(postMapper.toDTO(post)).thenReturn(dto);
+
+        // Act
+        Page<PostDTO> result = postService.getPosts(pageable, title);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        verify(postRepository).findPostByTitleContainingIgnoreCase(pageable, title);
+    }
+
+    @Test
+    void getPosts_WithEmptyResult_ShouldReturnEmptyPage() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        String title = "nonexistent";
+
+        Page<Post> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+        when(postRepository.findPostByTitleContainingIgnoreCase(pageable, title))
+                .thenReturn(emptyPage);
+
+        // Act
+        Page<PostDTO> result = postService.getPosts(pageable, title);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.getContent().isEmpty());
+        verify(postRepository).findPostByTitleContainingIgnoreCase(pageable, title);
+        verify(postMapper, never()).toDTO(any());
+    }
+
+    @Test
+    void update_WithExistingPost_ShouldUpdateAndReturnDTO() {
+        // Arrange
+        Long postId = 1L;
+        PostUpdateDTO updateDTO = new PostUpdateDTO();
+        updateDTO.setId(postId);
+        updateDTO.setTitle("Updated Title");
+        updateDTO.setContent("Updated Content");
+
+        Post existingPost = new Post();
+        existingPost.setId(postId);
+        existingPost.setTitle("Old Title");
+        existingPost.setContent("Old Content");
+
+        Post savedPost = new Post();
+        savedPost.setId(postId);
+        savedPost.setTitle("Updated Title");
+        savedPost.setContent("Updated Content");
+
+        PostDTO expectedDTO = new PostDTO();
+        expectedDTO.setId(postId);
+        expectedDTO.setTitle("Updated Title");
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
+        when(postRepository.save(existingPost)).thenReturn(savedPost);
+        when(postMapper.toDTO(savedPost)).thenReturn(expectedDTO);
+
+        // Act
+        PostDTO result = postService.update(updateDTO);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(postId, result.getId());
+        assertEquals("Updated Title", result.getTitle());
+
+        verify(postRepository).findById(postId);
+        verify(postMapper).updateFromDTO(updateDTO, existingPost);
+        verify(postRepository).save(existingPost);
+        verify(postMapper).toDTO(savedPost);
+    }
+
+    @Test
+    void update_WithNonExistingPost_ShouldThrowException() {
+        // Arrange
+        Long postId = 999L;
+        PostUpdateDTO updateDTO = new PostUpdateDTO();
+        updateDTO.setId(postId);
+
+        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            postService.update(updateDTO);
+        });
+
+        assertEquals("Post not found", exception.getMessage());
+        verify(postRepository).findById(postId);
+        verify(postMapper, never()).updateFromDTO(any(), any());
+        verify(postRepository, never()).save(any());
+        verify(postMapper, never()).toDTO(any());
+    }
+
+    @Test
+    void update_WithNullDTO_ShouldThrowException() {
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> {
+            postService.update(null);
+        });
+
+        verify(postRepository, never()).findById(any());
+    }
+
+    @Test
+    void update_WithNullIdInDTO_ShouldThrowException() {
+        // Arrange
+        PostUpdateDTO updateDTO = new PostUpdateDTO();
+        updateDTO.setId(null);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            postService.update(updateDTO);
+        });
+
+        assertEquals("Post not found", exception.getMessage());
+        verify(postRepository).findById(null);
+    }
+
+    @Test
+    void delete_WithExistingId_ShouldDeletePost() {
+        // Arrange
+        Long postId = 1L;
+        doNothing().when(postRepository).deleteById(postId);
+
+        // Act
+        assertDoesNotThrow(() -> {
+            postService.delete(postId);
+        });
+
+        // Assert
+        verify(postRepository).deleteById(postId);
+    }
+
+    @Test
+    void delete_WithNonExistingId_ShouldThrowDataAccessException() {
+        // Arrange
+        Long postId = 999L;
+        doThrow(new DataAccessException("Post not found") {}).when(postRepository).deleteById(postId);
+
+        // Act & Assert
+        DataAccessException exception = assertThrows(DataAccessException.class, () -> {
+            postService.delete(postId);
+        });
+
+        assertEquals("Post not found", exception.getMessage());
+        verify(postRepository).deleteById(postId);
+    }
+
+    @Test
+    void delete_WithNullId_ShouldThrowException() {
+        // Arrange
+        Long postId = null;
+        doThrow(new IllegalArgumentException("ID must not be null")).when(postRepository).deleteById(null);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            postService.delete(postId);
+        });
+
+        verify(postRepository).deleteById(null);
+    }
+
+    // Дополнительные тесты для edge cases
+
+    @Test
+    void getPosts_WithDifferentPageable_ShouldUseCorrectPagination() {
+        // Arrange
+        Pageable pageable = PageRequest.of(2, 5, Sort.by("title").descending());
+        String title = "test";
+
+        Page<Post> postPage = new PageImpl<>(List.of(), pageable, 0);
+
+        when(postRepository.findPostByTitleContainingIgnoreCase(pageable, title))
+                .thenReturn(postPage);
+
+        // Act
+        Page<PostDTO> result = postService.getPosts(pageable, title);
+
+        // Assert
+        assertNotNull(result);
+        verify(postRepository).findPostByTitleContainingIgnoreCase(pageable, title);
+    }
+
+    @Test
+    void update_WithPartialUpdate_ShouldUpdateOnlyProvidedFields() {
+        // Arrange
+        Long postId = 1L;
+        PostUpdateDTO updateDTO = new PostUpdateDTO();
+        updateDTO.setId(postId);
+        updateDTO.setTitle("New Title");
+        // content не установлен - должен остаться прежним
+
+        Post existingPost = new Post();
+        existingPost.setId(postId);
+        existingPost.setTitle("Old Title");
+        existingPost.setContent("Old Content");
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
+        when(postRepository.save(existingPost)).thenReturn(existingPost);
+        when(postMapper.toDTO(existingPost)).thenReturn(new PostDTO());
+
+        // Act
+        postService.update(updateDTO);
+
+        // Assert
+        verify(postMapper).updateFromDTO(updateDTO, existingPost);
+        // Маппер должен обработать частичное обновление
     }
 }

@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 public class PostUpdateDTO {
 
-    private int id;
+    private Long id;
     private String title;
     private String content;
     private List<Tag> tags;
