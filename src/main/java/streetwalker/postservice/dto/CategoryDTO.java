@@ -1,6 +1,12 @@
 package streetwalker.postservice.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class CategoryDTO {
-    public static class PostDTO {
-    }
+    private String categoryName;
+    private String categoryDescription;
 }
+

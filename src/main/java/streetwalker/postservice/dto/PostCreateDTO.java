@@ -1,15 +1,15 @@
 package streetwalker.postservice.dto;
 
 import lombok.Getter;
-import streetwalker.postservice.models.Category;
-import streetwalker.postservice.models.Tag;
+import lombok.Setter;
 
 import java.util.List;
 @Getter
+@Setter
 public class PostCreateDTO {
     private Long authorId;
     private String title;
     private String content;
-    private List<Tag> tags;
-    private Category category;
+    private List<String> tags;
+    private CategoryDTO category;
 }
