@@ -53,6 +53,8 @@ public class PostService {
     public PostDTO update(PostUpdateDTO postDTO) throws RuntimeException {
         Post post = postRepository.findById(postDTO.getId()).orElseThrow(()-> new RuntimeException("Post not found"));
         postMapper.updateFromDTO(postDTO, post);
+        post.setTags(tagService.proceedTagsWhenCreatingPost(postDTO.getTags()));
+        post.setCategory(categoryService.getCategory( postDTO.getCategoryName()));
         return postMapper.toDTO(postRepository.save(post));
     }
     public void delete(Long id) throws DataAccessException {

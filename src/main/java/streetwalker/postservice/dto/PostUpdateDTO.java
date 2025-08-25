@@ -13,6 +13,6 @@ public class PostUpdateDTO {
     private Long id;
     private String title;
     private String content;
-    private List<Tag> tags;
+    private List<String> tags;
     private String categoryName;
 }

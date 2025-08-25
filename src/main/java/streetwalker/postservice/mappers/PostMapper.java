@@ -19,7 +19,7 @@ public interface PostMapper {
     @Mapping(target = "likes", source = "likes", qualifiedByName = "countLikes")
     @Mapping(target = "tags", source = "tags", qualifiedByName = "mapTagsToDTO")
     @Mapping(target = "isUpdated", expression = "java(isPostUpdated(post))")
-    @Mapping(target = "comments", ignore = true) // У тебя в DTO comment в единственном числе, а в сущности список
+    @Mapping(target = "comments", ignore = true)
     PostDTO toDTO(Post post);
 
     @Mapping(target = "id", ignore = true)
