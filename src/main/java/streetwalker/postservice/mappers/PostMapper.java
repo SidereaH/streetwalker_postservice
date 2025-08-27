@@ -3,10 +3,10 @@ package streetwalker.postservice.mappers;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import streetwalker.postservice.dto.PostCreateDTO;
-import streetwalker.postservice.dto.PostDTO;
-import streetwalker.postservice.dto.PostUpdateDTO;
-import streetwalker.postservice.dto.TagDTO;
+import streetwalker.postservice.dto.post.PostCreateDTO;
+import streetwalker.postservice.dto.post.PostDTO;
+import streetwalker.postservice.dto.post.PostUpdateDTO;
+import streetwalker.postservice.dto.tag.TagDTO;
 import streetwalker.postservice.models.Post;
 import streetwalker.postservice.models.Tag;
 

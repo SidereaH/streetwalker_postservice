@@ -1,4 +1,4 @@
-package streetwalker.postservice.dto;
+package streetwalker.postservice.dto.tag;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

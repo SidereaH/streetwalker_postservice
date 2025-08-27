@@ -1,4 +1,4 @@
-package streetwalker.postservice.dto;
+package streetwalker.postservice.dto.category;
 
 import lombok.Getter;
 import lombok.Setter;
