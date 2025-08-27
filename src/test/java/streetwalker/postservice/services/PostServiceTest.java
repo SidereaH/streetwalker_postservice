@@ -7,7 +7,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.*;
-import streetwalker.postservice.dto.*;
+import streetwalker.postservice.dto.category.CategoryDTO;
+import streetwalker.postservice.dto.comment.CommentCreateDTO;
+import streetwalker.postservice.dto.post.PostCreateDTO;
+import streetwalker.postservice.dto.post.PostDTO;
+import streetwalker.postservice.dto.post.PostUpdateDTO;
+import streetwalker.postservice.dto.postlike.PostLikeDTO;
+import streetwalker.postservice.dto.tag.TagDTO;
 import streetwalker.postservice.mappers.PostMapper;
 import streetwalker.postservice.models.*;
 import streetwalker.postservice.repositories.PostRepository;
@@ -35,6 +41,8 @@ class PostServiceTest {
 
     @Mock
     private TagService tagService;
+
+    @Mock CommentService commentService;
 
     @InjectMocks
     private PostService postService;
@@ -583,5 +591,36 @@ class PostServiceTest {
         // Assert
         verify(postMapper).updateFromDTO(updateDTO, existingPost);
         // Маппер должен обработать частичное обновление
+    }
+
+    // ======================== addComment ========================
+    @Test
+    void addComment_WithValidData_ShouldCreateComment() {
+        CommentCreateDTO commentDTO = new CommentCreateDTO();
+        commentDTO.setPostId(1L);
+        commentDTO.setAuthorId(1L);
+        commentDTO.setContent("Test comment");
+
+        Post existingPost = new Post();
+        existingPost.setId(1L);
+        existingPost.setTitle("Old Title");
+        existingPost.setContent("Old Content");
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(existingPost));
+        postService.addComment(commentDTO);
+        verify(commentService).createComment(commentDTO, existingPost );
+    }
+    @Test
+    void addComment_WithInvalidPostId_ShouldThrowException() {
+        CommentCreateDTO commentDTO = new CommentCreateDTO();
+        commentDTO.setAuthorId(1L);
+        commentDTO.setContent("Test comment");
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            postService.addComment(commentDTO);
+        });
+
+        assertEquals("Post not found", exception.getMessage());
     }
 }

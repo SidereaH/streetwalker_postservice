@@ -1,6 +1,5 @@
-package streetwalker.postservice.dto;
+package streetwalker.postservice.dto.postlike;
 
-import jakarta.persistence.GeneratedValue;
 import lombok.Getter;
 import lombok.Setter;
 

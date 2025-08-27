@@ -4,15 +4,17 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import streetwalker.postservice.dto.PostCreateDTO;
-import streetwalker.postservice.dto.PostDTO;
-import streetwalker.postservice.dto.PostLikeDTO;
-import streetwalker.postservice.dto.PostUpdateDTO;
+import streetwalker.postservice.dto.comment.CommentCreateDTO;
+import streetwalker.postservice.dto.comment.CommentDTO;
+import streetwalker.postservice.dto.comment.CommentUpdateDTO;
+import streetwalker.postservice.dto.post.PostCreateDTO;
+import streetwalker.postservice.dto.post.PostDTO;
+import streetwalker.postservice.dto.postlike.PostLikeDTO;
+import streetwalker.postservice.dto.post.PostUpdateDTO;
 import streetwalker.postservice.mappers.PostMapper;
 import streetwalker.postservice.models.*;
 import streetwalker.postservice.repositories.PostRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 
@@ -22,12 +24,14 @@ public class PostService {
     private final PostMapper postMapper;
     private final CategoryService categoryService;
     private final TagService tagService;
+    private final CommentService commentService;
 
-    public PostService(PostRepository postRepository, PostMapper postMapper, CategoryService categoryService, TagService tagService) {
+    public PostService(PostRepository postRepository, PostMapper postMapper, CategoryService categoryService, TagService tagService, CommentService commentService) {
         this.postRepository = postRepository;
         this.postMapper = postMapper;
         this.categoryService = categoryService;
         this.tagService = tagService;
+        this.commentService = commentService;
     }
     public PostDTO create(PostCreateDTO postDTO) throws RuntimeException {
         if (postDTO != null){
@@ -92,6 +96,10 @@ public class PostService {
         postRepository.save(post);
     }
 
+    public Comment addComment(CommentCreateDTO commentDTO) throws RuntimeException {
+        Post post = postRepository.findById(commentDTO.getPostId()).orElseThrow(()-> new RuntimeException("Post not found"));
+        return commentService.createComment(commentDTO, post);
+    }
 
 
 }

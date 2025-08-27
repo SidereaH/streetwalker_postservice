@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import streetwalker.postservice.dto.TagDTO;
+import streetwalker.postservice.dto.tag.TagDTO;
 import streetwalker.postservice.models.Tag;
 import streetwalker.postservice.repositories.TagRepository;
 

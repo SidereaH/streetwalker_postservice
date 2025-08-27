@@ -1,10 +1,10 @@
-package streetwalker.postservice.dto;
+package streetwalker.postservice.dto.post;
 
 import lombok.Getter;
 import lombok.Setter;
-import streetwalker.postservice.models.Category;
-import streetwalker.postservice.models.Comment;
-import streetwalker.postservice.models.Tag;
+import streetwalker.postservice.dto.category.CategoryDTO;
+import streetwalker.postservice.dto.tag.TagDTO;
+import streetwalker.postservice.dto.comment.CommentDTO;
 
 import java.time.OffsetDateTime;
 import java.util.List;
